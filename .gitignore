@@ -1,1 +1,6 @@
-
+transactions.db
+*.db
+.env
+.replit
+replit.nix
+.upm/
