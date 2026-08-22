@@ -1,6 +1,6 @@
 # quantumvault
 # QuantumVault
-
+Built by **Prakalpa Prabhu** for QuantumHacks 2026. I'm interested in cybersecurity and cryptography, and wanted a technically substantial project spanning fintech, databases, and post-quantum security.
 QuantumVault is a FastAPI project backed by SQLite.
 It stores sample transactions signed with:
 - RSA-2048
