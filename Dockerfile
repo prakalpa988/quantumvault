@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     ninja-build \
     git \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs \
