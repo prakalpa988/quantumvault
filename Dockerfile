@@ -7,6 +7,15 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs \
+    && mkdir /tmp/liboqs/build \
+    && cd /tmp/liboqs/build \
+    && cmake -GNinja -DCMAKE_INSTALL_PREFIX=/usr/local .. \
+    && ninja \
+    && ninja install \
+    && ldconfig \
+    && rm -rf /tmp/liboqs
+
 WORKDIR /app
 
 COPY requirements.txt .
