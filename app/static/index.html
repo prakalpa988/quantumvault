@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantumVault — Post-Quantum Migration Dashboard</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #121822;
+    --border: #23303f;
+    --text: #e6edf3;
+    --muted: #8b98a5;
+    --danger: #ff5c5c;
+    --safe: #3ddc84;
+    --accent: #4f8cff;
+    --accent-dim: #244a85;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 24px 80px;
+  }
+  header {
+    max-width: 1000px;
+    margin: 0 auto 32px;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+  }
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    gap: 20px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel h2 {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+  .summary-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: #0e141c;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    min-width: 140px;
+  }
+  .stat .num { font-size: 24px; font-weight: 700; }
+  .stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat.danger .num { color: var(--danger); }
+  .stat.safe .num { color: var(--safe); }
 
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: #3d78e6; }
+  button:disabled { background: var(--accent-dim); cursor: not-allowed; }
+  button.secondary { background: #1c2530; border: 1px solid var(--border); }
+  button.secondary:hover { background: #232f3d; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge.vuln { background: rgba(255,92,92,0.12); color: var(--danger); }
+  .badge.safe { background: rgba(61,220,132,0.12); color: var(--safe); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.vuln { background: var(--danger); }
+  .dot.safe { background: var(--safe); }
+  .migrate-btn {
+    padding: 4px 10px; font-size: 11px; background: #1c2530; border: 1px solid var(--border);
+  }
+  .migrate-btn:hover { background: #232f3d; }
+
+  .bench-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .bench-card { background: #0e141c; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .bench-card h3 { margin: 0 0 10px; font-size: 14px; color: var(--accent); }
+  .bench-card dl { margin: 0; font-size: 12px; }
+  .bench-card dt { color: var(--muted); display: inline-block; width: 60%; }
+  .bench-card dd { display: inline-block; margin: 0; font-weight: 600; }
+  .bench-row { display: flex; justify-content: space-between; padding: 3px 0; }
+
+  .attack-text { font-size: 13px; line-height: 1.6; color: var(--text); }
+  .attack-text .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-top: 12px; margin-bottom: 4px; }
+  .disclaimer {
+    font-size: 12px; color: var(--muted); background: #0e141c; border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 12px; margin-bottom: 12px;
+  }
+
+  .empty { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
+  .loading { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔐 QuantumVault</h1>
+  <p>Finds the locks a future quantum computer can already plan to pick — and swaps them before it's too late.</p>
+</header>
+
+<div class="container">
+
+  <section class="panel">
+    <h2>Transaction Audit</h2>
+    <div class="summary-row" id="summaryRow">
+      <div class="stat"><div class="num" id="statTotal">—</div><div class="label">Total Transactions</div></div>
+      <div class="stat danger"><div class="num" id="statVuln">—</div><div class="label">Quantum-Vulnerable</div></div>
+      <div class="stat safe"><div class="num" id="statSafe">—</div><div class="label">Post-Quantum Safe</div></div>
+    </div>
+    <div class="actions">
+      <button id="runAuditBtn">Run Audit</button>
+      <button id="migrateAllBtn" class="secondary">Migrate All Vulnerable</button>
+    </div>
+    <table id="txTable" style="display:none;">
+      <thead>
+        <tr><th>ID</th><th>Sender → Receiver</th><th>Amount</th><th>Algorithm</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="txBody"></tbody>
+    </table>
+    <div id="txEmpty" class="empty">Click "Run Audit" to scan the transaction database.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Real Performance Benchmark</h2>
+    <div class="actions">
+      <button id="runBenchBtn">Run Benchmark</button>
+    </div>
+    <div id="benchGrid" class="bench-grid" style="margin-top:16px;"></div>
+    <div id="benchEmpty" class="empty">Click "Run Benchmark" to measure real keygen/sign/encapsulate timing.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Why This Matters: The Attack</h2>
+    <div id="attackContent">
+      <button id="loadAttackBtn">Show Explanation</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const API = "";
+
+  async function fetchJSON(url, opts) {
+    const res = await fetch(API + url, opts);
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+    return res.json();
+  }
+
+  // ---------- AUDIT ----------
+  const txBody = document.getElementById("txBody");
+  const txTable = document.getElementById("txTable");
+  const txEmpty = document.getElementById("txEmpty");
+
+  function renderAudit(data) {
+    document.getElementById("statTotal").textContent = data.total;
+    document.getElementById("statVuln").textContent = data.vulnerable_count;
+    document.getElementById("statSafe").textContent = data.total - data.vulnerable_count;
+
+    txBody.innerHTML = "";
+    data.transactions.forEach(tx => {
+      const tr = document.createElement("tr");
+      const badgeClass = tx.vulnerable ? "vuln" : "safe";
+      const badgeText = tx.vulnerable ? "Vulnerable" : "Safe";
+      tr.innerHTML = `
+        <td>#${tx.id}</td>
+        <td>tx-${String(tx.id).padStart(2,"0")}</td>
+        <td>$${tx.amount.toFixed(2)}</td>
+        <td>${tx.algorithm}</td>
+        <td><span class="badge ${badgeClass}"><span class="dot ${badgeClass}"></span>${badgeText}</span></td>
+        <td>${tx.vulnerable ? `<button class="migrate-btn" data-id="${tx.id}">Migrate</button>` : ""}</td>
+      `;
+      txBody.appendChild(tr);
+    });
+
+    txTable.style.display = data.transactions.length ? "table" : "none";
+    txEmpty.style.display = data.transactions.length ? "none" : "block";
+
+    document.querySelectorAll(".migrate-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "…";
+        await fetchJSON(`/migrate/${btn.dataset.id}`, { method: "POST" });
+        await runAudit();
+      });
+    });
+  }
+
+  async function runAudit() {
+    txEmpty.textContent = "Loading…";
+    txEmpty.style.display = "block";
+    txTable.style.display = "none";
+    try {
+      const data = await fetchJSON("/audit");
+      renderAudit(data);
+    } catch (e) {
+      txEmpty.textContent = "Could not reach the API. Is the server running?";
+    }
+  }
+
+  document.getElementById("runAuditBtn").addEventListener("click", runAudit);
+
+  document.getElementById("migrateAllBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("migrateAllBtn");
+    btn.disabled = true;
+    btn.textContent = "Migrating…";
+    try {
+      const data = await fetchJSON("/audit");
+      const vulnerableIds = data.transactions.filter(t => t.vulnerable).map(t => t.id);
+      for (const id of vulnerableIds) {
+        await fetchJSON(`/migrate/${id}`, { method: "POST" });
+      }
+      await runAudit();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Migrate All Vulnerable";
+    }
+  });
+
+  // ---------- BENCHMARK ----------
+  const benchGrid = document.getElementById("benchGrid");
+  const benchEmpty = document.getElementById("benchEmpty");
+
+  function renderBenchmark(data) {
+    benchGrid.innerHTML = "";
+    Object.entries(data).forEach(([algo, metrics]) => {
+      const card = document.createElement("div");
+      card.className = "bench-card";
+      const rows = Object.entries(metrics).map(([k, v]) => {
+        const label = k.replace(/_/g, " ").replace("ms", "(ms)").replace("bytes", "(bytes)");
+        return `<div class="bench-row"><span class="dt">${label}</span><span class="dd">${v}</span></div>`;
+      }).join("");
+      card.innerHTML = `<h3>${algo}</h3>${rows}`;
+      benchGrid.appendChild(card);
+    });
+    benchEmpty.style.display = "none";
+  }
+
+  document.getElementById("runBenchBtn").addEventListener("click", async () => {
+    benchEmpty.textContent = "Running real keygen/sign/encapsulate operations…";
+    benchEmpty.style.display = "block";
+    try {
+      const data = await fetchJSON("/benchmark");
+      renderBenchmark(data);
+    } catch (e) {
+      benchEmpty.textContent = "Could not reach the API.";
+    }
+  });
+
+  // ---------- ATTACK DEMO ----------
+  document.getElementById("loadAttackBtn").addEventListener("click", async () => {
+    const container = document.getElementById("attackContent");
+    container.innerHTML = `<div class="loading">Loading…</div>`;
+    try {
+      const data = await fetchJSON("/api/attack-demo");
+      container.innerHTML = `
+        <div class="disclaimer">⚠️ ${data.disclaimer}</div>
+        <div class="attack-text">
+          <span class="label">Why RSA / ECDSA are at risk</span>
+          ${data.rsa_risk}
+          <span class="label">Why ML-DSA / ML-KEM resist this</span>
+          ${data.mldsa_resistance}
+        </div>
+      `;
+    } catch (e) {
+      container.innerHTML = `<div class="empty">Could not reach the API.</div>`;
+    }
+  });
+</script>
+
+</body>
+</html>
