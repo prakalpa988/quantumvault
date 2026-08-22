@@ -3,295 +3,208 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QuantumVault — Post-Quantum Migration Dashboard</title>
+<title>QuantumVault — PQC Audit Terminal</title>
 <style>
   :root {
-    --bg: #0b0f14;
-    --panel: #121822;
-    --border: #23303f;
-    --text: #e6edf3;
-    --muted: #8b98a5;
-    --danger: #ff5c5c;
-    --safe: #3ddc84;
-    --accent: #4f8cff;
-    --accent-dim: #244a85;
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #2a2a2a;
+    --border-bright: #3d3d3d;
+    --text: #e8e8e3;
+    --muted: #6b6b63;
+    --danger: #e8543d;
+    --safe: #4d9e6a;
+    --signal: #d4a72c;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding: 32px 24px 80px;
+    padding: 0;
   }
-  header {
-    max-width: 1000px;
-    margin: 0 auto 32px;
-  }
-  h1 {
-    font-size: 26px;
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
-  }
-  header p {
-    color: var(--muted);
-    margin: 0;
-    font-size: 14px;
-  }
-  .container {
-    max-width: 1000px;
-    margin: 0 auto;
-    display: grid;
-    gap: 20px;
-  }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-  }
-  .panel h2 {
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    margin: 0 0 16px;
-  }
-  .summary-row {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-  }
-  .stat {
-    background: #0e141c;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 18px;
-    min-width: 140px;
-  }
-  .stat .num { font-size: 24px; font-weight: 700; }
-  .stat .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .mono { font-family: "IBM Plex Mono", "SF Mono", Consolas, monospace; }
+  header { border-bottom: 1px solid var(--border); padding: 20px 28px; }
+  .header-row { max-width: 1040px; margin: 0 auto; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: 0.01em; }
+  h1 .tag { color: var(--signal); }
+  .byline { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .subhead { max-width: 1040px; margin: 8px auto 0; font-size: 13px; color: var(--muted); }
+  .container { max-width: 1040px; margin: 0 auto; padding: 28px; display: grid; gap: 24px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; }
+  .panel-head { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-head h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
+  .panel-body { padding: 18px; }
+  .stat-row { display: flex; border-bottom: 1px solid var(--border); }
+  .stat { flex: 1; padding: 16px 18px; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat .num { font-size: 26px; font-weight: 600; }
+  .stat .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
   .stat.danger .num { color: var(--danger); }
   .stat.safe .num { color: var(--safe); }
-
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
-  button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  button:hover { background: #3d78e6; }
-  button:disabled { background: var(--accent-dim); cursor: not-allowed; }
-  button.secondary { background: #1c2530; border: 1px solid var(--border); }
-  button.secondary:hover { background: #232f3d; }
-
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 600;
-  }
-  .badge.vuln { background: rgba(255,92,92,0.12); color: var(--danger); }
-  .badge.safe { background: rgba(61,220,132,0.12); color: var(--safe); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-  .dot.vuln { background: var(--danger); }
-  .dot.safe { background: var(--safe); }
-  .migrate-btn {
-    padding: 4px 10px; font-size: 11px; background: #1c2530; border: 1px solid var(--border);
-  }
-  .migrate-btn:hover { background: #232f3d; }
-
-  .bench-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
-  .bench-card { background: #0e141c; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
-  .bench-card h3 { margin: 0 0 10px; font-size: 14px; color: var(--accent); }
-  .bench-card dl { margin: 0; font-size: 12px; }
-  .bench-card dt { color: var(--muted); display: inline-block; width: 60%; }
-  .bench-card dd { display: inline-block; margin: 0; font-weight: 600; }
-  .bench-row { display: flex; justify-content: space-between; padding: 3px 0; }
-
-  .attack-text { font-size: 13px; line-height: 1.6; color: var(--text); }
-  .attack-text .label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-top: 12px; margin-bottom: 4px; }
-  .disclaimer {
-    font-size: 12px; color: var(--muted); background: #0e141c; border: 1px solid var(--border);
-    border-radius: 6px; padding: 8px 12px; margin-bottom: 12px;
-  }
-
-  .empty { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
-  .loading { color: var(--muted); font-size: 13px; }
+  .actions { display: flex; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  button { background: transparent; color: var(--text); border: 1px solid var(--border-bright); padding: 7px 14px; border-radius: 2px; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; font-family: inherit; transition: border-color 0.12s, background 0.12s; }
+  button:hover { border-color: var(--signal); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: var(--signal); color: #0a0a0a; border-color: var(--signal); }
+  button.primary:hover { background: #e6b93a; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 9px 18px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+  td.mono { font-size: 12px; }
+  .tag { display: inline-block; padding: 2px 7px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; border-radius: 2px; border: 1px solid; }
+  .tag.vuln { color: var(--danger); border-color: var(--danger); background: rgba(232,84,61,0.08); }
+  .tag.safe { color: var(--safe); border-color: var(--safe); background: rgba(77,158,106,0.08); }
+  .migrate-link { background: none; border: none; color: var(--signal); font-size: 11px; text-decoration: underline; padding: 0; cursor: pointer; }
+  .bench-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--border); }
+  .bench-card { background: var(--surface); padding: 16px 18px; }
+  .bench-card h3 { margin: 0 0 10px; font-size: 12px; color: var(--signal); text-transform: uppercase; letter-spacing: 0.04em; }
+  .bench-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+  .bench-row span:first-child { color: var(--muted); }
+  .attack-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+  .attack-text .label { color: var(--signal); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-top: 14px; margin-bottom: 5px; font-weight: 700; }
+  .disclaimer { font-size: 11px; color: var(--muted); border-left: 2px solid var(--signal); padding: 6px 0 6px 12px; margin-bottom: 14px; }
+  .empty { color: var(--muted); font-size: 12px; padding: 24px; text-align: center; }
+  footer { max-width: 1040px; margin: 40px auto 0; padding: 18px 28px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
 </style>
 </head>
 <body>
-
 <header>
-  <h1>🔐 QuantumVault</h1>
-  <p>Finds the locks a future quantum computer can already plan to pick — and swaps them before it's too late.</p>
+  <div class="header-row">
+    <h1 class="mono"><span class="tag">[</span>QuantumVault<span class="tag">]</span></h1>
+    <span class="byline">Post-Quantum Migration Audit</span>
+  </div>
+  <p class="subhead">Finds the locks a future quantum computer can already plan to pick — and swaps them before it's too late.</p>
 </header>
-
 <div class="container">
-
   <section class="panel">
-    <h2>Transaction Audit</h2>
-    <div class="summary-row" id="summaryRow">
-      <div class="stat"><div class="num" id="statTotal">—</div><div class="label">Total Transactions</div></div>
-      <div class="stat danger"><div class="num" id="statVuln">—</div><div class="label">Quantum-Vulnerable</div></div>
-      <div class="stat safe"><div class="num" id="statSafe">—</div><div class="label">Post-Quantum Safe</div></div>
+    <div class="panel-head"><h2>Transaction Audit</h2></div>
+    <div class="stat-row">
+      <div class="stat mono"><div class="num" id="statTotal">—</div><div class="label">Total Scanned</div></div>
+      <div class="stat mono danger"><div class="num" id="statVuln">—</div><div class="label">Vulnerable (RSA/ECDSA)</div></div>
+      <div class="stat mono safe"><div class="num" id="statSafe">—</div><div class="label">Secured (ML-DSA)</div></div>
     </div>
     <div class="actions">
-      <button id="runAuditBtn">Run Audit</button>
-      <button id="migrateAllBtn" class="secondary">Migrate All Vulnerable</button>
+      <button id="runAuditBtn" class="primary">Run Audit</button>
+      <button id="migrateAllBtn">Migrate All Vulnerable</button>
     </div>
     <table id="txTable" style="display:none;">
-      <thead>
-        <tr><th>ID</th><th>Sender → Receiver</th><th>Amount</th><th>Algorithm</th><th>Status</th><th></th></tr>
-      </thead>
+      <thead><tr><th>ID</th><th>Route</th><th>Amount</th><th>Algorithm</th><th>Status</th><th></th></tr></thead>
       <tbody id="txBody"></tbody>
     </table>
-    <div id="txEmpty" class="empty">Click "Run Audit" to scan the transaction database.</div>
+    <div id="txEmpty" class="empty">Run audit to scan transactions.db for classical cryptographic signatures.</div>
   </section>
-
   <section class="panel">
-    <h2>Real Performance Benchmark</h2>
-    <div class="actions">
-      <button id="runBenchBtn">Run Benchmark</button>
-    </div>
-    <div id="benchGrid" class="bench-grid" style="margin-top:16px;"></div>
-    <div id="benchEmpty" class="empty">Click "Run Benchmark" to measure real keygen/sign/encapsulate timing.</div>
+    <div class="panel-head"><h2>Real Performance Benchmark</h2></div>
+    <div class="actions"><button id="runBenchBtn" class="primary">Run Benchmark</button></div>
+    <div id="benchGrid" class="bench-grid"></div>
+    <div id="benchEmpty" class="empty">Measures real keygen / sign / encapsulate timing — no simulated numbers.</div>
   </section>
-
   <section class="panel">
-    <h2>Why This Matters: The Attack</h2>
-    <div id="attackContent">
-      <button id="loadAttackBtn">Show Explanation</button>
-    </div>
+    <div class="panel-head"><h2>Attack Explainer</h2></div>
+    <div class="panel-body" id="attackContent"><button id="loadAttackBtn">Show Explanation</button></div>
   </section>
-
 </div>
-
+<footer>
+  <span>Prakalpa Prabhu — QuantumHacks 2026</span>
+  <span class="mono">RSA-2048 · ML-KEM-768 · ML-DSA-65</span>
+</footer>
 <script>
-  const API = "";
-
   async function fetchJSON(url, opts) {
-    const res = await fetch(API + url, opts);
+    const res = await fetch(url, opts);
     if (!res.ok) throw new Error(`Request failed: ${res.status}`);
     return res.json();
   }
-
-  // ---------- AUDIT ----------
   const txBody = document.getElementById("txBody");
   const txTable = document.getElementById("txTable");
   const txEmpty = document.getElementById("txEmpty");
-
   function renderAudit(data) {
     document.getElementById("statTotal").textContent = data.total;
     document.getElementById("statVuln").textContent = data.vulnerable_count;
     document.getElementById("statSafe").textContent = data.total - data.vulnerable_count;
-
     txBody.innerHTML = "";
     data.transactions.forEach(tx => {
       const tr = document.createElement("tr");
-      const badgeClass = tx.vulnerable ? "vuln" : "safe";
-      const badgeText = tx.vulnerable ? "Vulnerable" : "Safe";
+      const cls = tx.vulnerable ? "vuln" : "safe";
+      const label = tx.vulnerable ? "VULNERABLE" : "SECURED";
       tr.innerHTML = `
-        <td>#${tx.id}</td>
-        <td>tx-${String(tx.id).padStart(2,"0")}</td>
-        <td>$${tx.amount.toFixed(2)}</td>
-        <td>${tx.algorithm}</td>
-        <td><span class="badge ${badgeClass}"><span class="dot ${badgeClass}"></span>${badgeText}</span></td>
-        <td>${tx.vulnerable ? `<button class="migrate-btn" data-id="${tx.id}">Migrate</button>` : ""}</td>
+        <td class="mono">${String(tx.id).padStart(2,"0")}</td>
+        <td class="mono">tx-${String(tx.id).padStart(2,"0")}</td>
+        <td class="mono">$${tx.amount.toFixed(2)}</td>
+        <td class="mono">${tx.algorithm}</td>
+        <td><span class="tag ${cls}">${label}</span></td>
+        <td>${tx.vulnerable ? `<button class="migrate-link" data-id="${tx.id}">migrate →</button>` : ""}</td>
       `;
       txBody.appendChild(tr);
     });
-
     txTable.style.display = data.transactions.length ? "table" : "none";
     txEmpty.style.display = data.transactions.length ? "none" : "block";
-
-    document.querySelectorAll(".migrate-btn").forEach(btn => {
+    document.querySelectorAll(".migrate-link").forEach(btn => {
       btn.addEventListener("click", async () => {
-        btn.disabled = true;
         btn.textContent = "…";
         await fetchJSON(`/migrate/${btn.dataset.id}`, { method: "POST" });
         await runAudit();
       });
     });
   }
-
   async function runAudit() {
-    txEmpty.textContent = "Loading…";
+    txEmpty.textContent = "Scanning…";
     txEmpty.style.display = "block";
     txTable.style.display = "none";
     try {
-      const data = await fetchJSON("/audit");
-      renderAudit(data);
+      renderAudit(await fetchJSON("/audit"));
     } catch (e) {
-      txEmpty.textContent = "Could not reach the API. Is the server running?";
+      txEmpty.textContent = "Could not reach the API.";
     }
   }
-
   document.getElementById("runAuditBtn").addEventListener("click", runAudit);
-
   document.getElementById("migrateAllBtn").addEventListener("click", async () => {
     const btn = document.getElementById("migrateAllBtn");
     btn.disabled = true;
     btn.textContent = "Migrating…";
     try {
       const data = await fetchJSON("/audit");
-      const vulnerableIds = data.transactions.filter(t => t.vulnerable).map(t => t.id);
-      for (const id of vulnerableIds) {
-        await fetchJSON(`/migrate/${id}`, { method: "POST" });
-      }
+      const ids = data.transactions.filter(t => t.vulnerable).map(t => t.id);
+      for (const id of ids) await fetchJSON(`/migrate/${id}`, { method: "POST" });
       await runAudit();
     } finally {
       btn.disabled = false;
       btn.textContent = "Migrate All Vulnerable";
     }
   });
-
-  // ---------- BENCHMARK ----------
   const benchGrid = document.getElementById("benchGrid");
   const benchEmpty = document.getElementById("benchEmpty");
-
   function renderBenchmark(data) {
     benchGrid.innerHTML = "";
     Object.entries(data).forEach(([algo, metrics]) => {
       const card = document.createElement("div");
       card.className = "bench-card";
       const rows = Object.entries(metrics).map(([k, v]) => {
-        const label = k.replace(/_/g, " ").replace("ms", "(ms)").replace("bytes", "(bytes)");
-        return `<div class="bench-row"><span class="dt">${label}</span><span class="dd">${v}</span></div>`;
+        const label = k.replace(/_/g, " ");
+        return `<div class="bench-row mono"><span>${label}</span><span>${v}</span></div>`;
       }).join("");
       card.innerHTML = `<h3>${algo}</h3>${rows}`;
       benchGrid.appendChild(card);
     });
     benchEmpty.style.display = "none";
   }
-
   document.getElementById("runBenchBtn").addEventListener("click", async () => {
-    benchEmpty.textContent = "Running real keygen/sign/encapsulate operations…";
+    benchEmpty.textContent = "Running real keygen / sign / encapsulate operations…";
     benchEmpty.style.display = "block";
     try {
-      const data = await fetchJSON("/benchmark");
-      renderBenchmark(data);
+      renderBenchmark(await fetchJSON("/benchmark"));
     } catch (e) {
       benchEmpty.textContent = "Could not reach the API.";
     }
   });
-
-  // ---------- ATTACK DEMO ----------
   document.getElementById("loadAttackBtn").addEventListener("click", async () => {
     const container = document.getElementById("attackContent");
-    container.innerHTML = `<div class="loading">Loading…</div>`;
+    container.innerHTML = `<div class="empty">Loading…</div>`;
     try {
       const data = await fetchJSON("/api/attack-demo");
       container.innerHTML = `
-        <div class="disclaimer">⚠️ ${data.disclaimer}</div>
+        <div class="disclaimer">${data.disclaimer}</div>
         <div class="attack-text">
           <span class="label">Why RSA / ECDSA are at risk</span>
           ${data.rsa_risk}
@@ -304,6 +217,5 @@
     }
   });
 </script>
-
 </body>
 </html>
