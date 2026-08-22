@@ -4,3 +4,5 @@ transactions.db
 .replit
 replit.nix
 .upm/
+__pycache__/
+*.pyc

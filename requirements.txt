@@ -1,4 +1,5 @@
 fastapi
 uvicorn
-pyoqs
+liboqs-python
 pycryptodome
+
