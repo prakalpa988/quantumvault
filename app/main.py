@@ -176,6 +176,6 @@ def attack_demo() -> dict[str, str]:
             "ML-DSA and ML-KEM rely on the hardness of lattice problems "
             "(Module-LWE / Module-SIS), for which no efficient quantum algorithm "
             "is currently known, making them NIST-standardized post-quantum choices."
-        ),
+        )
     }
-    
+ 
