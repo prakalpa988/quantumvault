@@ -6,7 +6,8 @@ picked it over Flask because the automatic /docs page was genuinely useful
 while I was testing endpoints manually before I had a frontend at all.
 
 Everything here reads from a SQLite file (transactions.db) that seed_db.py
-generates. I kept the schema flat (one table) on purpose. A real system probably might split signatures into their own table, but for a hackathon
+generates. I kept the schema flat (one table) on purpose. A real system 
+probably might split signatures into their own table, but for a hackathon
 scope I didn't want to add relational complexity I didn't need to prove
 the actual idea.
 """
